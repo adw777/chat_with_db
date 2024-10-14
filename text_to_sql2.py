@@ -9,17 +9,22 @@ tokenizer = AutoTokenizer.from_pretrained(model_path)
 
 def natural_language_to_sql(question):
     schema = """
-    "sales" "Sale_ID" int, "Software_Name" text, "Version" text, "Sale_Date" text, "Customer_Name" text, "Customer_Country" text, "Sale_Amount" real, "Payment_Method" text, primary key: "Sale_ID"
+    "customers" "Customer_ID" int, "Customer_Name" text, "Customer_Country" text, "Email" text, primary key: "Customer_ID";
+    "software" "Software_ID" int, "Software_Name" text, "Version" text, "Release_Date" text, primary key: "Software_ID";
+    "sales" "Sale_ID" int, "Software_ID" int, "Customer_ID" int, "Sale_Date" text, "Sale_Amount" real, "Payment_Method" text, primary key: "Sale_ID", foreign key: "Software_ID" references software (Software_ID), foreign key: "Customer_ID" references customers (Customer_ID);
     """
 
     input_text = f"Question: {question} Schema: {schema}"
+    #input_text = " ".join(["Question: ",question, "Schema:", schema])
 
     model_inputs = tokenizer(input_text, return_tensors="pt")
     outputs = model.generate(**model_inputs, max_length=512)
 
     sql_query = tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
+    # Ensure no leading commas or unwanted characters
+    if sql_query.startswith(','):
+        sql_query = sql_query[1:]  # Remove leading comma if present
     return sql_query
-
 
 def execute_sql_query(sql_query):
     conn = sqlite3.connect('software_sales_database.db')
@@ -28,7 +33,6 @@ def execute_sql_query(sql_query):
     results = cursor.fetchall()
     conn.close()
     return results
-    
 """
 def main():
     while True:

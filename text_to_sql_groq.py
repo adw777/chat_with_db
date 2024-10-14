@@ -1,13 +1,12 @@
 import sqlite3
-# from text_to_sql2 import natural_language_to_sql, execute_sql_query
 from groq import Groq
-from text_to_sql_groq import natural_language_to_sql, execute_sql_query
+from create_database import create_sample_database
 
 # Initialize Groq client
 client = Groq()
 
-def get_table_schema():
-    return """
+def natural_language_to_sql(question):
+    schema = """
     Table: customers
     Columns:
     - Customer_ID (int, primary key)
@@ -32,20 +31,15 @@ def get_table_schema():
     - Payment_Method (text)
     """
 
-def generate_insight(user_query, sql_query, query_results):
-    schema = get_table_schema()
-    
     prompt = f"""
-    Context:
-    User Query: {user_query}
-    SQL Query: {sql_query}
-    Query Results: {query_results}
+    Given the following database schema:
+
     {schema}
 
-    Task: Analyze the query results and provide an insight to the user's original question using the data from the query result.  
-    Keep the response concise and short, Do not add any data on your own!
+    Generate a SQL query to answer the following question:
+    {question}
 
-    Insigth:
+    Provide only the SQL query without any additional explanation.
     """
 
     response = client.chat.completions.create(
@@ -56,11 +50,27 @@ def generate_insight(user_query, sql_query, query_results):
             }
         ],
         model="llama-3.1-8b-instant",
-        max_tokens=200,
-        temperature=0.5,
+        max_tokens=300,
+        temperature=0.2,
     )
 
-    return response.choices[0].message.content
+    sql_query = response.choices[0].message.content.strip()
+    
+     # Remove unwanted ```sql and ``` from the start and end of the query
+    if sql_query.startswith('```sql'):
+        sql_query = sql_query[6:].strip()  # Remove the starting ```sql
+    if sql_query.endswith('```'):
+        sql_query = sql_query[:-3].strip()  # Remove the ending ```
+
+    return sql_query
+
+def execute_sql_query(sql_query):
+    conn = sqlite3.connect('software_sales_database.db')
+    cursor = conn.cursor()
+    cursor.execute(sql_query)
+    results = cursor.fetchall()
+    conn.close()
+    return results
 
 def main():
     while True:
@@ -76,10 +86,6 @@ def main():
             print("Query Results:")
             for row in results:
                 print(row)
-            
-            insight = generate_insight(user_query, sql_query, results)
-            print("\nInsight:")
-            print(insight)
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
 
