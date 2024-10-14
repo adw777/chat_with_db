@@ -7,10 +7,9 @@ model_path = 'gaussalgo/T5-LM-Large-text2sql-spider'
 model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-# Function to convert natural language to SQL
 def natural_language_to_sql(question):
     schema = """
-    "singer" "Singer_ID" int , "Name" text , "Country" text , "Song_Name" text , "Song_release_year" text , "Age" int , "Is_male" bool , foreign_key:  primary key: "Singer_ID"
+    "sales" "Sale_ID" int, "Software_Name" text, "Version" text, "Sale_Date" text, "Customer_Name" text, "Customer_Country" text, "Sale_Amount" real, "Payment_Method" text, primary key: "Sale_ID"
     """
 
     input_text = f"Question: {question} Schema: {schema}"
@@ -21,19 +20,17 @@ def natural_language_to_sql(question):
     sql_query = tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
     return sql_query
 
-# Function to execute SQL query
+
 def execute_sql_query(sql_query):
-    conn = sqlite3.connect('music_database.db')
+    conn = sqlite3.connect('software_sales_database.db')
     cursor = conn.cursor()
     cursor.execute(sql_query)
     results = cursor.fetchall()
     conn.close()
     return results
-
-# Main function
-def main():
-    # create_sample_database()
     
+"""
+def main():
     while True:
         user_query = input("Enter your question (or 'quit' to exit): ")
         if user_query.lower() == 'quit':
@@ -52,3 +49,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+"""
