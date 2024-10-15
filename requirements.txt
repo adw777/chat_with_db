@@ -2,3 +2,6 @@ transformers
 torch
 groq
 pymongo
+qdrant-client
+python-dotenv
+sentence-transformers

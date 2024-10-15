@@ -1,11 +1,12 @@
 from pymongo import MongoClient
 from groq import Groq
+from text_to_Nosql import natural_language_to_nosql, execute_nosql_query
 
 # Initialize Groq client
 client = Groq()
 
-def natural_language_to_nosql(question):
-    schema = """
+def get_schema():
+    return """
     Collections:
     1. customers
        Fields: _id (int), name (string), country (string), email (string)
@@ -17,15 +18,22 @@ def natural_language_to_nosql(question):
        Fields: _id (int), software_id (int), customer_id (int), sale_date (string), sale_amount (float), payment_method (string)
     """
 
+def generate_insight(user_query, nosql_query, query_results):
+    schema = get_schema()
+    
     prompt = f"""
-    Given the following MongoDB schema:
-
+    Context:
+    User Query: {user_query}
+    MongoDB Query Code:
+    {nosql_query}
+    Query Results (first 5): {query_results[:5]}
+    Total Results: {len(query_results)}
     {schema}
 
-    Generate a MongoDB query to answer the following question:
-    {question}
+    Task: Analyze the query results and provide an insight to the user's original question using the data from the query result.  
+    Keep the response concise and short. Do not add any data on your own!
 
-    Provide only the MongoDB query without any additional explanation. Use the PyMongo syntax.
+    Insight:
     """
 
     response = client.chat.completions.create(
@@ -36,26 +44,11 @@ def natural_language_to_nosql(question):
             }
         ],
         model="llama-3.1-8b-instant",
-        max_tokens=300,
-        temperature=0.2,
+        max_tokens=200,
+        temperature=0.5,
     )
 
-    nosql_query = response.choices[0].message.content.strip()
-    
-    return nosql_query
-
-def execute_nosql_query(nosql_query):
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client['software_sales_database']
-    
-    # Execute the query
-    # Assuming the nosql_query is a valid PyMongo query string
-    try:
-        # Evaluate the query safely
-        result = eval(nosql_query)
-        return list(result)
-    except Exception as e:
-        raise Exception(f"Error executing query: {e}")
+    return response.choices[0].message.content
 
 def main():
     while True:
@@ -64,13 +57,19 @@ def main():
             break
         
         nosql_query = natural_language_to_nosql(user_query)
-        print(f"Generated MongoDB Query: {nosql_query}")
+        print(f"Generated MongoDB Query Code:")
+        print(nosql_query)
         
         try:
             results = execute_nosql_query(nosql_query)
-            print("Query Results:")
-            for row in results:
+            print("\nQuery Results (first 5):")
+            for row in results[:5]:
                 print(row)
+            print(f"\nTotal results: {len(results)}")
+            
+            insight = generate_insight(user_query, nosql_query, results)
+            print("\nInsight:")
+            print(insight)
         except Exception as e:
             print(f"An error occurred: {e}")
 
