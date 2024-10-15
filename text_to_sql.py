@@ -9,9 +9,9 @@ tokenizer = AutoTokenizer.from_pretrained(model_path)
 
 def natural_language_to_sql(question):
     schema = """
-    "customers" "Customer_ID" int, "Customer_Name" text, "Customer_Country" text, "Email" text, primary key: "Customer_ID";
-    "software" "Software_ID" int, "Software_Name" text, "Version" text, "Release_Date" text, primary key: "Software_ID";
-    "sales" "Sale_ID" int, "Software_ID" int, "Customer_ID" int, "Sale_Date" text, "Sale_Amount" real, "Payment_Method" text, primary key: "Sale_ID", foreign key: "Software_ID" references software (Software_ID), foreign key: "Customer_ID" references customers (Customer_ID);
+    "customers" "Customer_ID" int, "Customer_Name" text, "Customer_Country" text, "Email" text, primary key: "Customer_ID" [SEP]
+    "software" "Software_ID" int, "Software_Name" text, "Version" text, "Release_Date" text, primary key: "Software_ID" [SEP]
+    "sales" "Sale_ID" int, "Software_ID" int, "Customer_ID" int, "Sale_Date" text, "Sale_Amount" real, "Payment_Method" text, primary key: "Sale_ID", foreign key: "Software_ID" references software (Software_ID), foreign key: "Customer_ID" references customers (Customer_ID)
     """
 
     input_text = f"Question: {question} Schema: {schema}"
@@ -33,7 +33,7 @@ def execute_sql_query(sql_query):
     results = cursor.fetchall()
     conn.close()
     return results
-"""
+
 def main():
     while True:
         user_query = input("Enter your question (or 'quit' to exit): ")
@@ -53,4 +53,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-"""
+

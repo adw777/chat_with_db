@@ -56,11 +56,11 @@ def natural_language_to_sql(question):
 
     sql_query = response.choices[0].message.content.strip()
     
-     # Remove unwanted ```sql and ``` from the start and end of the query
+    # Remove unwanted ```sql and ``` from the start and end of the query
     if sql_query.startswith('```sql'):
-        sql_query = sql_query[6:].strip()  # Remove the starting ```sql
+        sql_query = sql_query[6:].strip()  
     if sql_query.endswith('```'):
-        sql_query = sql_query[:-3].strip()  # Remove the ending ```
+        sql_query = sql_query[:-3].strip()  
 
     return sql_query
 

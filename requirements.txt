@@ -1,3 +1,4 @@
 transformers
 torch
 groq
+pymongo
